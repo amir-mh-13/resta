@@ -1,0 +1,127 @@
+/* .span-test {
+	animation-name: text-showup;
+	animation-duration: 1s;
+	animation-timing-function: ease-in-out;
+}
+
+@keyframes text-showup {
+	from {
+		transform: translateY(-30px) scale(0.7);
+		opacity: 0.3;
+	}
+	to {
+		transform: translateY(0px) scale(1);
+		opacity: 1;
+	}
+} */
+
+@keyframes hero-text-enter {
+	from {
+		opacity: 0;
+		transform: translateY(-24px) scale(0.96);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+}
+
+@keyframes login-register-form-enter {
+	from {
+		opacity: 0;
+		transform: translateY(-40px) scale(0.95);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+}
+
+.login-register-form-enter {
+	opacity: 0;
+	animation: login-register-form-enter 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.login-register-form-enter-delay {
+	animation-delay: 200ms;
+}
+
+
+.hero-text-enter {
+	opacity: 0;
+	animation: hero-text-enter 1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.hero-delay-1 {
+	animation-delay: 1000ms;
+}
+
+.hero-delay-2 {
+	animation-delay: 1300ms;
+}
+
+.hero-delay-3 {
+	animation-delay: 1600ms;
+}
+
+.hero-delay-4 {
+	animation-delay: 1900ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.hero-text-enter {
+		opacity: 1;
+		animation: none;
+		transform: none;
+	}
+}
+
+
+@keyframes hero-feature-enter {
+	from {
+		opacity: 0;
+		transform: translateY(30px) scale(0.96);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+}
+
+
+.hero-feature-enter.hero-feature-delay-1 {
+	animation-delay: 2300ms;
+}
+
+.hero-feature-enter {
+	opacity: 0;
+	animation: hero-feature-enter 1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+
+
+
+.scroll-reveal {
+	opacity: 0;
+	transform: translateY(100px);
+	transition:
+		opacity 1s ease-in-out,
+		transform 1s cubic-bezier(0.22, 1, 0.36, 1);
+	transition-delay: var(--reveal-delay, 0ms);
+}
+
+.scroll-reveal.is-visible {
+	opacity: 1;
+	transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.scroll-reveal {
+		opacity: 1;
+		transform: none;
+		transition: none;
+	}
+}
