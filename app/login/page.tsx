@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import "@/components/home/ShowupAnimation.module.css";
+import FieldError from "@/components/forms/field-error";
 
 import {
   ArrowRight,
@@ -23,6 +25,67 @@ import { Label } from "@/components/ui/label";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
+
+  const router = useRouter();
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [generalError, setGeneralError] = useState("");
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    setIsLoading(true);
+    setErrors({});
+    setGeneralError("");
+
+    const formData = new FormData(event.currentTarget);
+
+    const email = formData.get("email");
+    const password = formData.get("password");
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
+
+      const data: {
+        message?: string;
+        errors?: Record<string, string>;
+      } = await response.json();
+
+      if (!response.ok) {
+        if (data.errors) {
+          setErrors(data.errors);
+        } else {
+          setGeneralError(data.message || "ورود ناموفق بود. دوباره تلاش کن.");
+        }
+
+        return;
+      }
+
+      router.replace("/profile");
+    } catch {
+      setGeneralError("ارتباط با سرور برقرار نشد. دوباره تلاش کن.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  function clearFieldError(field: string) {
+    setErrors((prev) => {
+      const updated = { ...prev };
+      delete updated[field];
+      return updated;
+    });
+  }
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-muted/30 md:flex md:items-center md:justify-center md:p-5 lg:p-8">
@@ -70,7 +133,11 @@ export default function LoginPage() {
             </div>
 
             {/* Login form */}
-            <form className="space-y-4 sm:space-y-5">
+            <form
+              className="space-y-4 sm:space-y-5"
+              noValidate
+              onSubmit={handleSubmit}
+            >
               {/* Email */}
               <div className="space-y-2">
                 <Label htmlFor="email">ایمیل</Label>
@@ -85,10 +152,16 @@ export default function LoginPage() {
                     dir="ltr"
                     autoComplete="email"
                     placeholder="name@example.com"
-                    className="h-12 rounded-xl bg-background pr-10 text-left focus:border-none"
+                    onChange={() => clearFieldError("email")}
+                    className={
+                      errors.email
+                        ? "h-12 rounded-xl bg-background pr-10 text-left focus:border-none border-destructive focus-visible:ring-destructive"
+                        : "h-12 rounded-xl bg-background pr-10 text-left focus:border-none"
+                    }
                     required
                   />
                 </div>
+                <FieldError message={errors.email} />
               </div>
 
               {/* Password */}
@@ -105,7 +178,12 @@ export default function LoginPage() {
                     dir="ltr"
                     autoComplete="current-password"
                     placeholder="رمز عبور خود را وارد کنید"
-                    className="h-12 rounded-xl bg-background px-11 text-left focus:border-none"
+                    onChange={() => clearFieldError("password")}
+                    className={
+                      errors.password
+                        ? "h-12 rounded-xl bg-background px-11 text-left focus:border-none border-destructive focus-visible:ring-destructive"
+                        : "h-12 rounded-xl bg-background px-11 text-left focus:border-none"
+                    }
                     required
                   />
 
@@ -124,6 +202,8 @@ export default function LoginPage() {
                     )}
                   </button>
                 </div>
+
+								<FieldError message={errors.password} />
               </div>
 
               {/* Forgot password */}
@@ -136,12 +216,15 @@ export default function LoginPage() {
                 </Link>
               </div>
 
+              {generalError && <FieldError message={generalError} />}
+
               {/* Submit */}
               <Button
-                type="button"
+                type="submit"
+                disabled={isLoading}
                 className="h-12 w-full cursor-pointer rounded-xl text-base font-semibold shadow-md shadow-primary/15 transition-all hover:shadow-lg hover:shadow-primary/20"
               >
-                ورود به حساب کاربری
+                {isLoading ? "در حال بررسی درخواست..." : "ورود به حساب کاربری"}
               </Button>
 
               {/* Footer divider */}
