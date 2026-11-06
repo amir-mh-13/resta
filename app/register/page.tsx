@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   Eye,
@@ -13,8 +15,18 @@ import {
   MapPin,
   ShieldCheck,
   UserRound,
+  CheckCircle2,
 } from "lucide-react";
 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+import FeildError from "@/components/forms/field-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -24,6 +36,110 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+
+  const router = useRouter();
+
+  const [isSuccessOpen, setIsSuccessOpen] = useState(false);
+  const [redirectCountdown, setRedirectCountdown] = useState(10);
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [generalError, setGeneralError] = useState("");
+
+  useEffect(() => {
+    if (!isSuccessOpen) return;
+
+    setRedirectCountdown(10);
+
+    const timeoutId = setTimeout(() => {
+      router.replace("/profile");
+    }, 10000);
+
+    const intervalId = setInterval(() => {
+      setRedirectCountdown((prev) => Math.max(prev - 1, 0));
+    }, 1000);
+
+    return () => {
+      clearTimeout(timeoutId);
+      clearInterval(intervalId);
+    };
+  }, [isSuccessOpen, router]);
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    setErrors({});
+    setGeneralError("");
+
+    const formData = new FormData(event.currentTarget);
+
+    const firstName = String(formData.get("firstName") ?? "");
+    const lastName = String(formData.get("lastName") ?? "");
+    const email = String(formData.get("email") ?? "");
+    const password = String(formData.get("password") ?? "");
+    const confirmPassword = String(formData.get("confirmPassword") ?? "");
+
+    const newErrors: Record<string, string> = {};
+
+    if (password.length >= 8 && password !== confirmPassword) {
+      newErrors.confirmPassword = "رمزهای عبور با هم مطابقت ندارند";
+    }
+
+    if (!acceptedTerms) {
+      setGeneralError("برای ثبت‌نام باید با قوانین و مقررات موافقت کنید.");
+    }
+
+    if (Object.keys(newErrors).length > 0 || !acceptedTerms) {
+      setErrors(newErrors);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          email,
+          password,
+        }),
+      });
+
+      const data: {
+        message?: string;
+        errors?: Record<string, string>;
+      } = await response.json();
+
+      if (!response.ok) {
+        if (data.errors) {
+          setErrors(data.errors);
+        } else {
+          setGeneralError("ثبت‌نام انجام نشد. دوباره تلاش کنید.");
+        }
+
+        return;
+      }
+
+      setIsSuccessOpen(true);
+    } catch {
+      setGeneralError("ارتباط با سرور برقرار نشد. دوباره تلاش کنید.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  function clearFieldError(field: string) {
+    setErrors((prev) => {
+      const updated = { ...prev };
+      delete updated[field];
+      return updated;
+    });
+  }
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-muted/30 md:flex md:items-center md:justify-center md:p-5 lg:p-8">
@@ -70,7 +186,11 @@ export default function RegisterPage() {
               </p>
             </div>
 
-            <form className="space-y-4 sm:space-y-5">
+            <form
+              onSubmit={handleSubmit}
+              noValidate
+              className="space-y-4 sm:space-y-5"
+            >
               {/* Name fields */}
               <div className="grid grid-cols-1 gap-3 md:gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
@@ -85,10 +205,16 @@ export default function RegisterPage() {
                       type="text"
                       autoComplete="given-name"
                       placeholder="مثلاً علی"
-                      className="h-12 rounded-xl bg-background pr-10 focus:border-none"
+                      onChange={() => clearFieldError("firstName")}
+                      className={
+                        errors.firstName
+                          ? "h-12 rounded-xl bg-background pr-10 focus:border-none border-destructive focus-visible:ring-destructive"
+                          : "h-12 rounded-xl bg-background pr-10 focus:border-none"
+                      }
                       required
                     />
                   </div>
+                  <FeildError message={errors.firstName} />
                 </div>
 
                 <div className="space-y-2">
@@ -100,9 +226,15 @@ export default function RegisterPage() {
                     type="text"
                     autoComplete="family-name"
                     placeholder="مثلاً احمدی"
-                    className="h-12 rounded-xl bg-background focus:border-none"
+                    onChange={() => clearFieldError("lastName")}
+                    className={
+                      errors.lastName
+                        ? "h-12 rounded-xl bg-background focus:border-none border-destructive focus-visible:ring-destructive"
+                        : "h-12 rounded-xl bg-background focus:border-none"
+                    }
                     required
                   />
+                  <FeildError message={errors.lastName} />
                 </div>
               </div>
 
@@ -120,10 +252,16 @@ export default function RegisterPage() {
                     dir="ltr"
                     autoComplete="email"
                     placeholder="name@example.com"
-                    className="h-12 rounded-xl bg-background pr-10 text-left focus:border-none"
+                    onChange={() => clearFieldError("email")}
+                    className={
+                      errors.email
+                        ? "h-12 rounded-xl bg-background pr-10 text-left focus:border-none border-destructive focus-visible:ring-destructive"
+                        : "h-12 rounded-xl bg-background pr-10 text-left focus:border-none"
+                    }
                     required
                   />
                 </div>
+                <FeildError message={errors.email} />
               </div>
 
               {/* Password */}
@@ -140,7 +278,15 @@ export default function RegisterPage() {
                     dir="ltr"
                     autoComplete="new-password"
                     placeholder="حداقل ۸ کاراکتر"
-                    className="h-12 rounded-xl bg-background px-11 text-left focus:border-none"
+                    onChange={() => {
+                      clearFieldError("password");
+                      clearFieldError("confirmPassword");
+                    }}
+                    className={
+                      errors.password
+                        ? "h-12 rounded-xl bg-background px-11 text-left focus:border-none border-destructive focus-visible:ring-destructive"
+                        : "h-12 rounded-xl bg-background px-11 text-left focus:border-none"
+                    }
                     minLength={8}
                     required
                   />
@@ -160,6 +306,7 @@ export default function RegisterPage() {
                     )}
                   </button>
                 </div>
+                <FeildError message={errors.password} />
               </div>
 
               {/* Confirm password */}
@@ -176,7 +323,12 @@ export default function RegisterPage() {
                     dir="ltr"
                     autoComplete="new-password"
                     placeholder="رمز عبور را دوباره وارد کنید"
-                    className="h-12 rounded-xl bg-background px-11 text-left focus:border-none"
+                    onChange={() => clearFieldError("confirmPassword")}
+                    className={
+                      errors.confirmPassword
+                        ? "h-12 rounded-xl bg-background px-11 text-left focus:border-none border-destructive focus-visible:ring-destructive"
+                        : "h-12 rounded-xl bg-background px-11 text-left focus:border-none"
+                    }
                     minLength={8}
                     required
                   />
@@ -198,6 +350,7 @@ export default function RegisterPage() {
                     )}
                   </button>
                 </div>
+                <FeildError message={errors.confirmPassword} />
               </div>
 
               {/* Terms */}
@@ -228,11 +381,11 @@ export default function RegisterPage() {
 
               {/* Submit */}
               <Button
-                type="button"
-                disabled={!acceptedTerms}
+                type="submit"
+                disabled={!acceptedTerms || isLoading}
                 className="h-12 w-full rounded-xl text-base font-semibold shadow-md shadow-primary/15 transition-all hover:shadow-lg  cursor-pointer hover:shadow-primary/20"
               >
-                ساخت حساب کاربری
+                {isLoading ? "در حال بررسی درخواست..." : "ساخت حساب کاربری"}
               </Button>
 
               {/* Footer */}
@@ -277,7 +430,9 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <p className="text-2xl md:text-3xl text-center bg-primary/20 rounded-xl py-0.5 md:py-1 md:px-10 font-bold">رستا</p>
+              <p className="text-2xl md:text-3xl text-center bg-primary/20 rounded-xl py-0.5 md:py-1 md:px-10 font-bold">
+                رستا
+              </p>
               <p className="mt-1 text-xs text-white/80">
                 راهی برای تجربه‌های تازه
               </p>
@@ -346,6 +501,43 @@ export default function RegisterPage() {
           </div>
         </section>
       </div>
+
+      <Dialog open={isSuccessOpen} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-md rounded-2xl">
+          <DialogHeader className="items-center text-center gap-3">
+            <div className="flex size-16 items-center justify-center rounded-full bg-green-500/10">
+              <CheckCircle2 className="size-9 text-green-600" />
+            </div>
+
+            <DialogTitle className="text-xl">
+              ثبت‌نام موفقیت‌آمیز بود!
+            </DialogTitle>
+
+            <DialogDescription className="text-center text-md leading-7">
+              حساب کاربری شما با موفقیت ایجاد شد. اکنون به صفحه پروفایل منتقل
+              می‌شوید.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 pt-2">
+            <p className="text-center text-sm text-muted-foreground">
+              انتقال خودکار تا{" "}
+              <span className="font-bold text-primary tabular-nums">
+                {redirectCountdown}
+              </span>{" "}
+              ثانیه دیگر
+            </p>
+
+            <Button
+              type="button"
+              className="h-11 w-full rounded-xl"
+              onClick={() => router.replace("/profile")}
+            >
+              باشه، برو به پروفایل
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
