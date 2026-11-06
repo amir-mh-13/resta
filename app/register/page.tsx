@@ -49,8 +49,6 @@ export default function RegisterPage() {
   useEffect(() => {
     if (!isSuccessOpen) return;
 
-    setRedirectCountdown(10);
-
     const timeoutId = setTimeout(() => {
       router.replace("/profile");
     }, 10000);
@@ -205,7 +203,7 @@ export default function RegisterPage() {
                       type="text"
                       autoComplete="given-name"
                       placeholder="مثلاً علی"
-                      onChange={() => clearFieldError("firstName")}
+                      onChange={() => {clearFieldError("firstName"); clearFieldError("generalError")}}
                       className={
                         errors.firstName
                           ? "h-12 rounded-xl bg-background pr-10 focus:border-none border-destructive focus-visible:ring-destructive"
@@ -226,7 +224,7 @@ export default function RegisterPage() {
                     type="text"
                     autoComplete="family-name"
                     placeholder="مثلاً احمدی"
-                    onChange={() => clearFieldError("lastName")}
+                    onChange={() => {clearFieldError("lastName"); clearFieldError("generalError")}}
                     className={
                       errors.lastName
                         ? "h-12 rounded-xl bg-background focus:border-none border-destructive focus-visible:ring-destructive"
@@ -252,7 +250,7 @@ export default function RegisterPage() {
                     dir="ltr"
                     autoComplete="email"
                     placeholder="name@example.com"
-                    onChange={() => clearFieldError("email")}
+                    onChange={() => {clearFieldError("email"); clearFieldError("generalError")}}
                     className={
                       errors.email
                         ? "h-12 rounded-xl bg-background pr-10 text-left focus:border-none border-destructive focus-visible:ring-destructive"
@@ -281,6 +279,7 @@ export default function RegisterPage() {
                     onChange={() => {
                       clearFieldError("password");
                       clearFieldError("confirmPassword");
+											clearFieldError("generalError");
                     }}
                     className={
                       errors.password
@@ -323,7 +322,7 @@ export default function RegisterPage() {
                     dir="ltr"
                     autoComplete="new-password"
                     placeholder="رمز عبور را دوباره وارد کنید"
-                    onChange={() => clearFieldError("confirmPassword")}
+                    onChange={() => {clearFieldError("confirmPassword"); clearFieldError("generalError")}}
                     className={
                       errors.confirmPassword
                         ? "h-12 rounded-xl bg-background px-11 text-left focus:border-none border-destructive focus-visible:ring-destructive"
@@ -379,6 +378,7 @@ export default function RegisterPage() {
                 </Label>
               </div>
 
+							<FeildError message={generalError} />
               {/* Submit */}
               <Button
                 type="submit"
@@ -503,7 +503,7 @@ export default function RegisterPage() {
       </div>
 
       <Dialog open={isSuccessOpen} onOpenChange={() => {}}>
-        <DialogContent className="sm:max-w-md rounded-2xl">
+        <DialogContent className="sm:max-w-md rounded-2xl" showCloseButton={false}>
           <DialogHeader className="items-center text-center gap-3">
             <div className="flex size-16 items-center justify-center rounded-full bg-green-500/10">
               <CheckCircle2 className="size-9 text-green-600" />
