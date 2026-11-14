@@ -3,6 +3,9 @@ import User from "@/database/user.model";
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 
+import { createSession } from "@/lib/session";
+import { setSessionCookie } from "@/lib/cookie";
+
 // هش ساختگی برای جلوگیری از timing attack وقتی کاربر پیدا نمی‌شود
 const DUMMY_HASH =
   "$2a$12$C6UzMDM.H6dfI/f/IKcEeO5pQ1pQ8bX1m8mYb9m3q1g0Xn8m6y0eK";
@@ -68,7 +71,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    return NextResponse.json(
+    const { token } = await createSession(user._id);
+
+    const response = NextResponse.json(
       {
         message: "Login successful",
         user: {
@@ -80,6 +85,9 @@ export async function POST(req: NextRequest) {
       },
       { status: 200 },
     );
+
+    await setSessionCookie(response, token);
+		return response;
   } catch (error) {
     console.error("Login error:", error);
 
@@ -88,4 +96,4 @@ export async function POST(req: NextRequest) {
       { status: 500 },
     );
   }
-} 
+}

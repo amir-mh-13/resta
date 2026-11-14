@@ -1,4 +1,3 @@
-import Navbar from "../layout/Navbar";
 import HomeSeatchBox from "./HomeSearchBox";
 import { ShieldCheck, Headset, Star, Houses } from "lucide-react";
 import SearchBoxPopover from "./SerachBoxPopover";
@@ -35,7 +34,6 @@ export default function Hero() {
 
 			{/* Content */}
 			<div className="relative z-10">
-				<Navbar />
 				<div className="flex flex-col items-center justify-center text-center mt-28 lg:mt-35 px-3">
 					<span className="hero-text-enter hero-delay-1 span-test text-2xl lg:text-xl text-white drop-shadow-lg">به رستا خوش آمدید</span>
 					<span className="hero-text-enter hero-delay-2 text-5xl text-white drop-shadow-lg mt-4 font-semibold">اقامتگاه بعدی ات رو پیدا کن</span>
