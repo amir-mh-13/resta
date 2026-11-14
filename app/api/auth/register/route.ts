@@ -3,6 +3,9 @@ import User from "@/database/user.model";
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 
+import { createSession } from "@/lib/session";
+import { setSessionCookie } from "@/lib/cookie";
+
 export async function POST(req: NextRequest) {
   try {
     let body: unknown;
@@ -92,10 +95,15 @@ export async function POST(req: NextRequest) {
       profile: {
         firstName: userData.firstName,
         lastName: userData.lastName,
+				avatar: "/images/default-user-profile-pic.png"
       },
     });
 
-    return NextResponse.json(
+    // Create session
+    const { token } = await createSession(createdUser._id);
+
+    // Create response
+    const response = NextResponse.json(
       {
         message: "Account created successfully",
         user: {
@@ -107,6 +115,11 @@ export async function POST(req: NextRequest) {
       },
       { status: 201 },
     );
+
+    // Set session cookie
+    await setSessionCookie(response, token);
+
+    return response;
   } catch (error) {
     console.error("Registration error:", error);
 
